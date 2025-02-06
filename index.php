@@ -16,15 +16,16 @@ if (!get_config('local_quickstats', 'enable')) {
 }
 
 $period = get_config('local_quickstats', 'period');
-//$activeusercount = get_active_user_count($period);
-$sql = 'SELECT activeuserscount
-          FROM mdl_local_quickstats
-ORDER BY timecreated DESC
-LIMIT 1';
 
-$result = $DB->get_record_sql($sql);
+$result = $DB->get_records('local_quickstats', [], 'timecreated DESC', '*', 0, 1);
 
-$activeusercount = $result->activeuserscount;
+$activeusercount = 0;
+
+if ($result) {
+    $result = reset($result);
+    $activeusercount = $result->activeuserscount;
+}
+
 
 echo $OUTPUT->header();
 
