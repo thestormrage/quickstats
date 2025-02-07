@@ -24,23 +24,20 @@ class collect_active_users_count extends \core\task\scheduled_task
 
         $period = get_config('local_quickstats', 'period');
         $periodstart = strtotime("-$period days");
+        $currenttime = time();
 
-        $sql = 'SELECT COUNT(*) as users_count
-                  FROM mdl_user
-                 WHERE lastlogin BETWEEN :period AND UNIX_TIMESTAMP();';
+        $result = $DB->count_records_select(
+            'user',
+            'lastlogin BETWEEN :period AND :currenttime',
+            ['period' => $periodstart, 'currenttime' => $currenttime]
+        );
 
-        $result = $DB->get_record_sql($sql, ['period' => $period]);
+        $record = new \stdClass();
+        $record->activeuserscount = $result;
+        $record->periodstart = $periodstart;
+        $record->periodend = time();
+        $record->timecreated = time();
 
-        $insert_sql = "INSERT INTO mdl_local_quickstats (activeuserscount, periodstart, periodend, timecreated)
-                            VALUES (:activeuserscount, :periodstart, :periodend, :timecreated)";
-
-        $insert_params = [
-            'activeuserscount' => $result->users_count,
-            'periodstart' => $periodstart,
-            'periodend' => time(),
-            'timecreated' => time(),
-        ];
-
-        $DB->execute($insert_sql, $insert_params);
+        $DB->insert_record('local_quickstats',$record);
     }
 }
